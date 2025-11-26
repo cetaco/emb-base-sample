@@ -1,3 +1,12 @@
 menu "Zephyr"
 source "Kconfig.zephyr"
 endmenu
+
+
+menu "Aditional config"
+
+config TIMER_INTERVAL_MS
+    int "Intervalo do Timer (ms)"
+    default 10000
+
+endmenu
