@@ -1,3 +1,15 @@
 menu "Zephyr"
 source "Kconfig.zephyr"
 endmenu
+
+menu "extra config"
+
+config BLINK_TIME_MS
+    int "blink time(ms)"
+    default 1000
+
+config FADE_TIME_MS
+    int "fade time(ms)"
+    default 1000
+
+endmenu
