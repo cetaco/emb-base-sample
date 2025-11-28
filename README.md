@@ -1,71 +1,31 @@
-# Atividades de Sistemas Embarcados
+# Radar de Velocidade com Sensores Magnéticos
 
-Este repositório contém exemplos e exercícios práticos para o curso de sistemas embarcados, utilizando Zephyr RTOS. As atividades abordam conceitos fundamentais como GPIO, PWM, timers e uso do sistema de logs.
+## Descrição do Projeto
+Projeto de um radar de velocidade que utiliza dois sensores magnéticos espaçados para realizar a contagem de eixos e o cálculo de velocidade de veículos. O sistema é baseado em threads para coleta de dados, processamento e exibição, simulando também uma câmera que reconhece a placa do veículo.
 
----
+## Configuração e Execução no QEMU
+Para rodar o código no QEMU, abra o terminal do VSCode dentro da pasta do projeto com o ambiente virtual ativado e utilize os comandos:
 
-## Atividade 1 – Hello World com Timer
+- Compilar o projeto: "west build -p always -b mps2/an385 -- -DDTC_OVERLAY_FILE=boards/arm/mps2_an385.overlay"
+- Rodar o projeto: "west build -t run"
+- Abrir o menu de configuração (menuconfig): "west build -t menuconfig"
 
-### Objetivos
+## Opções Kconfig
+- `CONFIG_RADAR_SENSOR_DISTANCE_MM`: Distância entre os sensores em milímetros.
+- `CONFIG_RADAR_SPEED_LIMIT_LIGHT_KMH`: Limite de velocidade para veículos leves em km/h.
+- `CONFIG_RADAR_SPEED_LIMIT_HEAVY_KMH`: Limite de velocidade para veículos pesados em km/h.
+- `CONFIG_RADAR_WARNING_THRESHOLD_PERCENT`: Percentual do limite que ativa o display no modo “amarelo” (exemplo: 90% do limite).
+- `CONFIG_RADAR_CAMERA_FAILURE_RATE_PERCENT`: Porcentagem de chance da câmera simular uma falha (0-100%).
 
-- Implementar um Hello World periódico utilizando a API de timer do Zephyr.
-- Utilizar diferentes níveis de log para exibir a mensagem.
-- Configurar, via Kconfig, o intervalo de repetição da mensagem.
+## Arquitetura do Sistema
+O projeto é baseado em threads, onde estas tem as seguintes funcionalidades:
 
-### Etapas
+- **Thread Sensores**: Responsável pela coleta dos dados dos sensores magnéticos, incluindo a contagem dos eixos via máquina de estados e cálculo da velocidade com base no tempo entre o acionamento dos sensores e a distância entre eles, Os dados de velocidade e contagem de eixos são enviados para a thread principal (main).
+- **Thread de camera**: recebe um trigger via zBus e retorna uma placa no formato mercosul pelo mesmo canal.
+- **Thread principal**: espera mensagem do sensor de velocidade via mensage queue e aciona a thread da câmera via zbus como trigger para executar a leitura de uma placa no formato Mercosul, recebendo a placa de volta pelo zbus, valida a placa e envia para a thread do display os valores velocidade, eixos e placa para a thread display:
+- **Thread de display**: processa os valores enviados pela main em sua fila de mensagens e exibe corretamente no terminal QEMU as informações de placa, velocidade e eixos, também exibe se o veiculo estava na velocidaded correta, na zona de aviso e acima da velocidade permitida via cores de texto.
+<img width="481" height="361" alt="arquitetura emb" src="https://github.com/user-attachments/assets/69ab791c-635b-4aef-b605-c7ff207c9d74" />
 
-1. **Configuração inicial**
-   - Crie um projeto Zephyr básico.
-   - Habilite o módulo de log no arquivo `prj.conf`.
-   - Defina uma opção no `Kconfig` para configurar o intervalo do timer.
+<img width="511" height="303" alt="state machine emb" src="https://github.com/user-attachments/assets/b4a34088-905f-457a-96a8-57b0bfd16d79" />
 
-2. **Implementação do timer**
-   - Implemente um timer periódico usando a API de timers do Zephyr.
-   - No callback do timer, imprima a mensagem “Hello World”.
-   - O intervalo do timer deve ser configurável via Kconfig.
 
-3. **Uso dos níveis de log**
-   - Utilize diferentes níveis de log (`LOG_INF`, `LOG_DBG`, `LOG_ERR`) para exibir a mensagem.
-   - Teste a alteração do nível de log no `prj.conf` e observe o comportamento.
-
----
-
-## Atividade 2 – Controle de Brilho de LED com GPIO, PWM e Botão
-
-### Objetivos
-
-- Compreender o uso de GPIO como entrada e saída.
-- Aplicar PWM para controlar o brilho de um LED.
-- Implementar interação entre botão e LED.
-
-### Etapas
-
-1. **Configuração simples**
-   - Configure um pino GPIO como saída.
-   - Escreva um código para ligar e desligar o LED.
-   - Ajuste o tempo de piscar do LED.
-
-2. **Controle do LED com botão**
-   - Configure outro pino GPIO como entrada para o botão.
-   - Altere o comportamento do LED quando o botão for pressionado.
-
-3. **Controle do brilho via PWM**
-   - Configure um pino com função PWM.
-   - Implemente a variação do duty cycle para modificar o brilho do LED.
-   - Crie um efeito de transição de brilho (fade in/fade out).
-
-4. **Integração botão + PWM**
-   - Defina dois modos de operação:
-     - **Modo 1:** LED acende/apaga normalmente (digital).
-     - **Modo 2:** LED apresenta variação gradual de brilho (PWM).
-   - Use o botão para alternar entre os modos.
-
----
-
-## Observações
-
-- Utilize o Zephyr RTOS e consulte a documentação oficial para detalhes sobre APIs de GPIO, PWM, timers e logs.
-- Os parâmetros de configuração devem ser definidos nos arquivos `prj.conf` e `Kconfig` do projeto.
-- Teste as funcionalidades em hardware compatível ou emuladores suportados pelo Zephyr.
-
----
